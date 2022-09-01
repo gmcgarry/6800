@@ -52,9 +52,9 @@ intros	.ascii	"\r\nPIA Demo"
 crlfs	.asciz	"\r\n"
 
 MAIN	LDX	#intros
-	JSR	PUTS
+	BSR	PUTS
 
-	JSR	PIA_INIT
+	BSR	PIA_INIT
 
 LOOP	LDAA	#'#'
 	BSR	PUTC
@@ -73,17 +73,17 @@ LOOP	LDAA	#'#'
 
 1:	CMPA	#'R'		; reset
 	BNE	1f
-	JSR	PIA_INIT
+	BSR	PIA_INIT
 	JMP	LOOP
 
 1:	CMPA	#'W'		; write
 	BNE	1f
-	JSR	WRITE
+	BSR	WRITE
 	JMP	LOOP
 
 1:	CMPA	#'I'		; interrupts
 	BNE	1f
-	JSR	IRQTST
+	BSR	IRQTST
 	JMP	LOOP
 
 1:	CMPA	#'X'		; exit
@@ -134,7 +134,7 @@ DUMP	CLRB
 
 irqs	.asciz	"testing interrupts\r\n"
 IRQTST	LDX	#irqs
-	JSR	PUTS
+	BSR	PUTS
 
 	SEI
 	LDX	#ISR
@@ -159,33 +159,33 @@ ISR	PSHA
 	STX	XSAVE
 
 	LDAA	PIACTLA
-	JSR	PUTHEX
+	BSR	PUTHEX
 	LDAA	PIACTLB
-	JSR	PUTHEX
+	BSR	PUTHEX
 	LDX	#crlfs
-	JSR	PUTS
+	BSR	PUTS
 
 	LDAA	PIACTLA
 	BITA	#$40
 	BEQ	1f
 	LDX	#inta2
-	JSR	PUTS
+	BSR	PUTS
 1:	BITA	#$80
 	BEQ	1f
 	LDX	#inta1
-	JSR	PUTS
+	BSR	PUTS
 1:	LDAA	PIACTLB
 	BITA	#$40
 	BEQ	1f
 	LDX	#intb2
-	JSR	PUTS
+	BSR	PUTS
 1:	BITA	#$80
 	BEQ	1f
 	LDX	#intb1
-	JSR	PUTS
+	BSR	PUTS
 	JMP	9f
 1:	LDX	unknown
-	JSR	PUTS
+	BSR	PUTS
 9:	LDAA	PIADATA		; clear interrupt
 	LDAA	PIADATB		; clear interrupt
 	LDX	XSAVE
@@ -193,10 +193,10 @@ ISR	PSHA
 	RTI
 
 writes	.asciz	"PORT/VALUE? "
-WRITE	LDX	writes
-	JSR	PUTS
-	LDX	PIADATA
-	JSR	GETC
+WRITE	LDX	#writes
+	BSR	PUTS
+	LDX	#PIADATA
+	BSR	GETC
 	CMPA	#'A'
 	BEQ	1f
 	CMPA	#'B'
@@ -204,11 +204,11 @@ WRITE	LDX	writes
 	INX
 	INX
 1:	LDAA	#' '
-	JSR	PUTC
-	JSR	GETHEX
-	STAA	0,X
-	LDX	crlfs
-	JSR	PUTS
+	BSR	PUTC
+	BSR	GETHEX
+	STAA	,X
+	LDX	#crlfs
+	BSR	PUTS
 9:	RTS
 
 1:	BSR	PUTC
@@ -218,6 +218,8 @@ PUTS	LDAA	0,X
   	RTS
 
 PUTHEX	PSHA
-	JSR	OUTHL
+	BSR	OUTHL
 	PULA
 	JMP	OUTHR
+
+	END
