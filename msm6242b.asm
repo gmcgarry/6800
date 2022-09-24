@@ -23,6 +23,8 @@ CF	EQU	REGS+15		; TEST, 24/12, STOP, REST
 ; ITRPT/STND=1 (interrupt mode), then STD.P remains low until IRQ is reset to 0
 ; ITRPT/STND=0 (standard-pulse mode), then STD.P remains low until IRQ is reset to 0 (or the t0/t1 timer expires)
 
+MONITR	EQU	$E0E3
+
 
 ACIA	EQU	$D800
 ACIACS	EQU	ACIA+0
@@ -36,60 +38,60 @@ start:
 	LDS	#$FF
 main:
 	LDX	#crlfs
-	BSR	PUTS
+	JSR	PUTS
 	LDX	#intros
-	BSR	PUTS
+	JSR	PUTS
 
-	BSR	reset
+	JSR	reset
 
 loop:
 	LDAA	#'#'
-	BSR	PUTC
+	JSR	PUTC
 	LDAA	#' '
-	BSR	PUTC
-	BSR	GETC
-	BSR	PUTC
+	JSR	PUTC
+	JSR	GETC
+	JSR	PUTC
 	PSHA
 	LDX	#crlfs
-	BSR	PUTS
+	JSR	PUTS
 	PULA
 1:
 	CMPA	#'D'		; dump
 	BNE	1f
-	BSR	dump
+	JSR	dump
 	BRA	loop
 1:
 	CMPA	#'R'		; reset
 	BNE	1f
-	BSR	reset
+	JSR	reset
 	BRA	loop
 1:
 	CMPA	#'T'		; time
 	BNE	1f
-	BSR	time
+	JSR	time
 	BRA	loop
 1:
 	CMPA	#'I'		; interrupt
 	BNE	1f
-	BSR	interrupt
+	JSR	interrupt
 	BRA	loop
 1:
 	CMPA	#'2'		; 24-hour time
 	BNE	1f
-	BSR	hour24
+	JSR	hour24
 	BRA	loop
 1:
 	CMPA	#'*'		; test mode
 	BNE	1f
-	BSR	testmode
+	JSR	testmode
 	BRA	loop
 1:
 	CMPA	#'X'		; exit
 	BNE	1f
-	JMP	$E01A
+	JMP	MONITR
 1:
 	LDX	#badcmds
-	BSR	PUTS
+	JSR	PUTS
 	JMP	loop
 
 intros	.asciz	"MSM6242B tester\r\n"
@@ -118,7 +120,7 @@ isr:
 	CLR	CD	; clear interrupt
 
 	LDAA	#'.'
-	BSR	PUTC
+	JSR	PUTC
 1:
 	RTI
 
@@ -179,48 +181,48 @@ hour24off	FCC	"Setting 12-hour time\r\n",0
 time:
 	LDAA	H10
 	ANDA	#$3
-	BSR	PUTDEC
+	JSR	PUTDEC
 	LDAA	H1
-	BSR	PUTDEC
+	JSR	PUTDEC
 	LDAA	#':'
-	BSR	PUTC
+	JSR	PUTC
 	LDAA	MI10
 ;	ANDA	#$7
-	BSR	PUTDEC
+	JSR	PUTDEC
 	LDAA	MI1
-	BSR	PUTDEC
+	JSR	PUTDEC
 	LDAA	#':'
-	BSR	PUTC
+	JSR	PUTC
 	LDAA	S10
 ;	ANDA	#$7
-	BSR	PUTDEC
+	JSR	PUTDEC
 	LDAA	S1
-	BSR	PUTDEC
+	JSR	PUTDEC
 
 	LDAA	#' '
-	BSR	PUTC
+	JSR	PUTC
 
 	LDAA	D10
 ;	ANDA	#$3
-	BSR	PUTDEC
+	JSR	PUTDEC
 	LDAA	D1
-	BSR	PUTDEC
+	JSR	PUTDEC
 	LDAA	#'/'
-	BSR	PUTC
+	JSR	PUTC
 	LDAA	MO10
 ;	ANDA	#$01
-	BSR	PUTDEC
+	JSR	PUTDEC
 	LDAA	MO1
-	BSR	PUTDEC
+	JSR	PUTDEC
 	LDAA	#'/'
-	BSR	PUTC
+	JSR	PUTC
 	LDAA	Y10
-	BSR	PUTDEC
+	JSR	PUTDEC
 	LDAA	Y1
-	BSR	PUTDEC
+	JSR	PUTDEC
 
 	LDAA	#' '
-	BSR	PUTC
+	JSR	PUTC
 
 	CLRB
 	LDAA	W
@@ -232,15 +234,15 @@ time:
 	STAB	XTEMP
 	LDX	XTEMP
 	LDX	,X
-	BSR	PUTS
+	JSR	PUTS
 
 ;	LDAA	XTEMP
-;	BSR	PUTHEX
+;	JSR	PUTHEX
 ;	LDAA	XTEMP+1
-;	BSR	PUTHEX
+;	JSR	PUTHEX
 
 	LDX	#crlfs
-	BRA	PUTS
+	JMP	PUTS
 
 WEEKDAY	FDB	SUNS, MONS, TUES, WEDS, THURS, FRIS, SATS, ERRORS
 SUNS	FCC	"Sunday",0
@@ -257,18 +259,18 @@ dump:
 	LDX	#REGS
 1:
 	TBA
-	BSR	PUTHEX
+	JSR	PUTHEX
 	LDAA	#':'
-	BSR	PUTC
+	JSR	PUTC
 	LDAA	#' '
-	BSR	PUTC
+	JSR	PUTC
 	LDAA	,X
-	BSR	PUTHEX
+	JSR	PUTHEX
 	INX
 	LDAA	#'\r'
-	BSR	PUTC
+	JSR	PUTC
 	LDAA	#'\n'
-	BSR	PUTC
+	JSR	PUTC
 	INCB
 	CMPB	#$10
 	BLO	1b
@@ -287,7 +289,7 @@ GETC:
         RTS
 
 1:
-        BSR     PUTC
+        JSR     PUTC
         INX
 PUTS:
         LDAA    0,X
@@ -301,7 +303,7 @@ PUTDEC:
 
 PUTHEX:
 OUT2H	PSHA
-	BSR     OUTHL   ; OUT LEFT HEX CHAR
+	JSR     OUTHL   ; OUT LEFT HEX CHAR
         PULA
 	BRA     OUTHR   ; OUTPUT RIGHT HEX CHAR AND R
 
@@ -331,3 +333,5 @@ PUTC:
         PULA    
         STAA    ACIADA
         RTS
+
+	END

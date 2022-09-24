@@ -8,13 +8,21 @@
 STACK		EQU	$7F00
 OLED_ADDR	EQU	$3C
 
-MONITR  EQU     $E01A
-PUTC    EQU     $E205
-GETC    EQU     $E1EE
-GETHEX  EQU     $E072
-OUTHL   EQU     $E07D
-OUTHR   EQU     $E081
+; SMITHBUG
+;MONITR  EQU     $E01A
+;PUTC    EQU     $E205
+;GETC    EQU     $E1EE
+;GETHEX  EQU     $E072
+;OUTHL   EQU     $E07D
+;OUTHR   EQU     $E081
 
+; for MIKBUG
+MONITR  EQU     $E0E3
+PUTC    EQU     $E075
+GETC    EQU     $E078
+GETHEX  EQU     $E0AA
+OUTHL   EQU     $E067
+OUTHR   EQU     $E06B
 
 	ORG	$0100
 ; ------------------------------------------------------------ 
@@ -27,7 +35,7 @@ KBHIT   LDAA    ACIACS
 	ASRA
 	RTS
 
-1:      BSR     PUTC
+1:      JSR     PUTC
 	INX
 PUTS    LDAA    ,X
 	BNE     1b
@@ -58,37 +66,37 @@ msg	.asciz "!?@Aa|\r\n"
 ; ------------------------------------------------------------ 
 MAIN:
 	LDX	#intro
-	BSR	PUTS
+	JSR	PUTS
 
-	BSR	oled_init
-	BSR	oled_clear
+	JSR	oled_init
+	JSR	oled_clear
 
 	CLR	ColStart
 	CLR	PageStart
 
 	LDX	#msg
-	BSR	PUTS
+	JSR	PUTS
 
 	LDX	#msg
-	BSR	putstring
+	JSR	putstring
 
 loop:
 	LDX	#on
-	BSR	PUTS
+	JSR	PUTS
 	LDX	#on
-	BSR	putstring
-	BSR	Delay
+	JSR	putstring
+	JSR	Delay
 
 	LDX	#off
-	BSR	PUTS
+	JSR	PUTS
 	LDX	#off
-	BSR	putstring
-	BSR	Delay
+	JSR	putstring
+	JSR	Delay
 
-	BSR	KBHIT
+	JSR	KBHIT
 	BCC	loop
 
-	BRA	MONITR
+	JMP	MONITR
 
 ; ------------------------------------------------------------ 
 Delay:
@@ -113,24 +121,24 @@ oled_init:
 	PSHB
 	STX	XSAVE
 
-	BSR	i2c_init
+	JSR	i2c_init
 
-	BSR	i2c_start
+	JSR	i2c_start
 	LDAA	#(OLED_ADDR<<1)
-	BSR	i2c_write
+	JSR	i2c_write
 
 	LDX	#init_data
 	LDAB	#(init_data_end - init_data)
 2:
 	LDAA	#$80
-	BSR	i2c_write
+	JSR	i2c_write
 	LDAA	,X
-	BSR	i2c_write
+	JSR	i2c_write
 	INX
 	DECB
 	BNE	2b
 
-	BSR	i2c_stop
+	JSR	i2c_stop
 
 	LDX	XSAVE
 	PULB
@@ -159,21 +167,21 @@ oled_clear:
 
 	LDX	#64		; rows
 1:
-	BSR	i2c_start
+	JSR	i2c_start
 	LDAA	#(OLED_ADDR<<1)
-	BSR	i2c_write
+	JSR	i2c_write
 
 	LDAA	#$40		; set start line to 0
-	BSR	i2c_write
+	JSR	i2c_write
 
 	LDAB	#16		; 16*8 columns
 2:
 	LDAA	#$00
-	BSR	i2c_write
+	JSR	i2c_write
 	DECB
 	BNE	2b
 
-	BSR	i2c_stop
+	JSR	i2c_stop
 
 	DEX
 	BNE	1b
@@ -190,7 +198,7 @@ putstring:
 1:
 	LDAA	,X
 	BEQ	2f
-	BSR	putchar
+	JSR	putchar
 	INX
 	BRA	1b
 2:
@@ -254,25 +262,25 @@ putchar:
 	ADDA	#(FONTHEIGHT-1)
 	STAA	PageEnd
 
-	BSR	SetColumn
-	BSR	SetPage
+	JSR	SetColumn
+	JSR	SetPage
 
-	BSR	i2c_start
+	JSR	i2c_start
 	LDAA	#(OLED_ADDR<<1)
-	BSR	i2c_write
+	JSR	i2c_write
 
 	LDAA	#$40
-	BSR	i2c_write
+	JSR	i2c_write
 
 	LDAB	#(FONTWIDTH*FONTHEIGHT)
 7:
 	LDAA	,X
-	BSR	i2c_write
+	JSR	i2c_write
 	INX
 	DECB
 	BNE	7b
 
-	BSR	i2c_stop
+	JSR	i2c_stop
 
 	LDAA	ColStart
 	ADDA	#FONTWIDTH
@@ -286,45 +294,45 @@ putchar:
 
 ; ------------------------------------------------------------ 
 SetColumn:
-	BSR	i2c_start
+	JSR	i2c_start
 	LDAA	#(OLED_ADDR<<1)
-	BSR	i2c_write
+	JSR	i2c_write
 
 	LDAA	#$00		; command stream
-	BSR	i2c_write
+	JSR	i2c_write
 
 	LDAA	#$21		; set column address range
-	BSR	i2c_write
+	JSR	i2c_write
 
 	LDAA	ColStart
-	BSR	i2c_write
+	JSR	i2c_write
 
 	LDAA	ColEnd
-	BSR	i2c_write
+	JSR	i2c_write
 
-	BSR	i2c_stop
+	JSR	i2c_stop
 
 	RTS
 
 ; ------------------------------------------------------------ 
 SetPage:
-	BSR	i2c_start
+	JSR	i2c_start
 	LDAA	#(OLED_ADDR<<1)
-	BSR	i2c_write
+	JSR	i2c_write
 
 	LDAA	#$00		; command stream
-	BSR	i2c_write
+	JSR	i2c_write
 
 	LDAA	#$22		; set page address range
-	BSR	i2c_write
+	JSR	i2c_write
 
 	LDAA	PageStart
-	BSR	i2c_write
+	JSR	i2c_write
 
 	LDAA	PageEnd
-	BSR	i2c_write
+	JSR	i2c_write
 
-	BSR	i2c_stop
+	JSR	i2c_stop
 
 	RTS
 
